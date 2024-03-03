@@ -6,13 +6,17 @@ import { isUndefined, get as getLodash } from 'lodash'
 export const getAllPosts = async (request: Request, response: Response) => {
     try {
         const { category } = request.query
-        const filter = { category } as FilterCategory
+        const filter = { category: category ?? 'null' } as FilterCategory
+        console.log('filter', filter)
         const allPostsdata = await fetchAllPosts(filter)
+        console.log({allPostsdata})
         if (!isUndefined(allPostsdata)) {
+            console.log('Loop')
             const { result = [], count } = allPostsdata
             response.setHeader('x-total-count', getLodash(count, '0.count', 0))
-            return response.status(200).json({ result })
-        }
+            console.log('hiii')
+            return (request.body.refreshToken) ? response.status(200).json({refreshToken:request.body.refreshToken, result }) : response.status(200).json({ result })
+        }  
         return response.status(204).json()
     } catch (error) {
         return response.status(500).json({ error })

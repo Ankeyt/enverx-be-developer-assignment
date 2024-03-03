@@ -1,6 +1,8 @@
 import { User } from '../models/user.model'
 import Crypto from 'crypto-js'
 import { Request, Response } from 'express'
+import * as redis from '../services/redis.services'
+import { deleteData } from '../services/redis.services'
 import jwt from 'jsonwebtoken'
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -40,13 +42,14 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Password invalid" })
         }
         const accessToken = jwt.sign({
-            user: user,
+            user: user.email,
             id: user._id
         }, String(process.env.JWT_KEY),
             {
-                expiresIn: "3d"
+                expiresIn: "10s"
             }
         )
+        redis.set(`${user._id}:token`, accessToken)
         res.status(200).json({
             accessToken,
             id: user._id
@@ -55,4 +58,17 @@ export const loginUser = async (req: Request, res: Response) => {
     } catch (err) {
         res.status(500).json(err)
     }
+}
+
+
+export async function logout(req: Request, res: Response){
+try {
+    const {id} = req.query
+    const userData =await User.findOne({_id:id})
+    if(!userData) throw new Error('User Not Found, Please Provide Correct Credential.')
+    deleteData(`${userData._id}:token`)
+    return res.status(200).send({success: true, message: 'User Logged Out Successfully'})
+} catch (error:any) {
+    return res.send({error: true, message: error?.message})
+}
 }

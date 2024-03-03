@@ -8,8 +8,11 @@ export const fetchAllPosts = async (filter: FilterCategory) => {
     try {
         const query = {}
         if (!isEmpty(filter) && !isUndefined(filter)) set(query, 'category', filter.category)
+        console.log('11')
         const pipeline = fetchallPostsAggregation(filter)
+        console.log('13')
         const [allPostsdata] = await Post.collection.aggregate<AggregationWithCount<BlogPost[]>>(pipeline).toArray()
+        console.log('15')
         return allPostsdata
     } catch (error) {
         throw new Error
